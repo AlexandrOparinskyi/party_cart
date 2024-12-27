@@ -31,4 +31,3 @@ class IsActiveManager(models.Manager):
         Completely deleting a record from the database
         """
         return self.unfiltered().delete(hard_delete=True)
-

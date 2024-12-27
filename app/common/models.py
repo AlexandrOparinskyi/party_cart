@@ -14,11 +14,6 @@ class BaseModel(models.Model):
         is_active (bool): Anything is deleted
     """
 
-    id = models.UUIDField(default=uuid.uuid4,
-                          unique=True,
-                          primary_key=True,
-                          db_index=True,
-                          editable=False)
     is_active = models.BooleanField(default=True)
 
     objects = IsActiveManager()

@@ -2,6 +2,7 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import (TokenObtainPairView,
                                             TokenVerifyView,
                                             TokenRefreshView)
@@ -25,7 +26,6 @@ class ProfileAPIView(APIView):
 
     serializer_class = ProfileSerializer
 
-
     @extend_schema(
         summary='Get profile',
         description='View to get profile',
@@ -46,7 +46,15 @@ class ProfileAPIView(APIView):
         if serializer. is_valid(raise_exception=True):
             user = User.objects.create_user(**serializer.validated_data)
             serializer = self.serializer_class(user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            data = serializer.data
+
+            refresh = RefreshToken.for_user(user)
+            data.setdefault('refresh', str(refresh))
+            data.setdefault('access', str(refresh.access_token))
+            data.setdefault('is_admin', request.user.is_admin)
+            data.pop('address')
+
+            return Response(data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
@@ -111,7 +119,12 @@ class AddressAPIView(APIView):
     )
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
+        if serializer.is_valid(raise_exception=True):
+
+            if Address.objects.filter(user=request.user,
+                                      **serializer.validated_data).exists():
+                return Response({'message': 'You already have this address'})
+
             address = Address.objects.create(user=request.user,
                                              **serializer.validated_data)
             serializer = self.serializer_class(address)
@@ -127,7 +140,30 @@ class AddressByIdAPIView(APIView):
     permission_classes = [IsOwnerOrAdminUser]
 
     def get_address(self, pk):
-        return Address.objects.get(pk=pk)
+        try:
+            address = Address.objects.get(pk=pk)
+            return address
+        except Address.DoesNotExist:
+            return None
+
+    @extend_schema(
+        summary='Get address',
+        description='View to get address by pk',
+        tags=address_tags
+    )
+    def get(self, request, *args, **kwargs):
+        address = self.get_address(kwargs.get('pk'))
+
+        if not address:
+            return Response({'message': 'Addresses not found'},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        if address.user != request.user and not request.user.is_admin:
+            return Response({'message': 'You not the owner of this address'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = self.serializer_class(address)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary='Update address',

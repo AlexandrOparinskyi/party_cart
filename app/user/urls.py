@@ -12,5 +12,5 @@ urlpatterns = [
     path('token/refresh/', CustomTokenRefreshView.as_view()),
     path('profile/', ProfileAPIView.as_view()),
     path('address/', AddressAPIView.as_view()),
-    path('address/<uuid:pk>', AddressByIdAPIView.as_view())
+    path('address/<int:pk>/', AddressByIdAPIView.as_view())
 ]

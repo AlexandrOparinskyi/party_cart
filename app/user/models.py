@@ -76,3 +76,6 @@ class Address(BaseModel):
 
     def __str__(self):
         return f'Address by {self.user}'
+
+    class Meta:
+        unique_together = ['user', 'city', 'street', 'house', 'apartment']

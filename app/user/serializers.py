@@ -11,6 +11,8 @@ class AddressSerializer(serializers.Serializer):
     house = serializers.CharField(max_length=20)
     apartment = serializers.CharField(max_length=20)
     description = serializers.CharField(max_length=255, allow_null=True)
+    full_address = serializers.CharField(read_only=True,
+                                         source='get_full_address')
 
 
 class ProfileSerializer(serializers.Serializer):
@@ -18,7 +20,7 @@ class ProfileSerializer(serializers.Serializer):
     surname = serializers.CharField()
     email = serializers.EmailField()
     phone = serializers.CharField()
-    address = AddressSerializer(many=True)
+    address = AddressSerializer(many=True, read_only=True)
     password = serializers.CharField(write_only=True)
 
     def validate_email(self, email):
@@ -40,5 +42,4 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         token = super().validate(attrs)
         token['is_admin'] = self.user.is_admin
-        token['is_staff'] = self.user.is_staff
         return token
