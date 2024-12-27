@@ -41,9 +41,6 @@ class User(AbstractBaseUser, BaseModel):
     def get_full_name(self):
         return f'{self.name} {self.surname}'
 
-    def get_full_address(self):
-        return self.address.get_full_address()
-
     def __str__(self):
         return self.get_full_name()
 
