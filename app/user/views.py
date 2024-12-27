@@ -1,3 +1,4 @@
+from django.template.context_processors import request
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, permissions
 from rest_framework.response import Response
@@ -139,9 +140,10 @@ class AddressByIdAPIView(APIView):
     serializer_class = AddressSerializer
     permission_classes = [IsOwnerOrAdminUser]
 
-    def get_address(self, pk):
+    def get_object(self, pk):
         try:
             address = Address.objects.get(pk=pk)
+            self.check_object_permissions(self.request, address)
             return address
         except Address.DoesNotExist:
             return None
@@ -152,15 +154,15 @@ class AddressByIdAPIView(APIView):
         tags=address_tags
     )
     def get(self, request, *args, **kwargs):
-        address = self.get_address(kwargs.get('pk'))
+        address = self.get_object(kwargs.get('pk'))
 
         if not address:
             return Response({'message': 'Addresses not found'},
                             status=status.HTTP_404_NOT_FOUND)
 
-        if address.user != request.user and not request.user.is_admin:
-            return Response({'message': 'You not the owner of this address'},
-                            status=status.HTTP_400_BAD_REQUEST)
+        # if address.user != request.user and not request.user.is_admin:
+        #     return Response({'message': 'You not the owner of this address'},
+        #                     status=status.HTTP_400_BAD_REQUEST)
 
         serializer = self.serializer_class(address)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -171,7 +173,7 @@ class AddressByIdAPIView(APIView):
         tags=address_tags
     )
     def put(self, request, *args, **kwargs):
-        address = self.get_address(kwargs.get('pk'))
+        address = self.get_object(kwargs.get('pk'))
 
         if not address:
             return Response({'message': 'Addresses not found'},
@@ -191,7 +193,7 @@ class AddressByIdAPIView(APIView):
         tags=address_tags
     )
     def delete(self, request, *args, **kwargs):
-        address = self.get_address(kwargs.get('pk'))
+        address = self.get_object(kwargs.get('pk'))
 
         if not address:
             return Response({'message': 'Addresses not found'},
