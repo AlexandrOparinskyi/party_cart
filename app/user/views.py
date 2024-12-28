@@ -1,4 +1,3 @@
-from django.template.context_processors import request
 from drf_spectacular.utils import extend_schema
 from rest_framework import status, permissions
 from rest_framework.response import Response
@@ -40,7 +39,7 @@ class ProfileAPIView(APIView):
     @extend_schema(
         summary='Registration',
         description='View to create a new user',
-        tags=token_tags
+        tags=token_tags + profile_tags
     )
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -151,7 +150,8 @@ class AddressByIdAPIView(APIView):
     @extend_schema(
         summary='Get address',
         description='View to get address by pk',
-        tags=address_tags
+        tags=address_tags,
+        operation_id='get_address'
     )
     def get(self, request, *args, **kwargs):
         address = self.get_object(kwargs.get('pk'))
@@ -160,17 +160,14 @@ class AddressByIdAPIView(APIView):
             return Response({'message': 'Addresses not found'},
                             status=status.HTTP_404_NOT_FOUND)
 
-        # if address.user != request.user and not request.user.is_admin:
-        #     return Response({'message': 'You not the owner of this address'},
-        #                     status=status.HTTP_400_BAD_REQUEST)
-
         serializer = self.serializer_class(address)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @extend_schema(
         summary='Update address',
         description='View to update address by pk',
-        tags=address_tags
+        tags=address_tags,
+        operation_id='update_address'
     )
     def put(self, request, *args, **kwargs):
         address = self.get_object(kwargs.get('pk'))
@@ -190,7 +187,8 @@ class AddressByIdAPIView(APIView):
     @extend_schema(
         summary='Delete address',
         description='View to delete address by pk',
-        tags=address_tags
+        tags=address_tags,
+        operation_id='delete_address'
     )
     def delete(self, request, *args, **kwargs):
         address = self.get_object(kwargs.get('pk'))
